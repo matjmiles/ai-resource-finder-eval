@@ -1,0 +1,191 @@
+{
+  "n": 105,
+  "scored": 105,
+  "statusCounts": {
+    "ok": 94,
+    "timeout": 11
+  },
+  "retrievalErrorRate": 0.10476190476190476,
+  "overall": {
+    "relevance": 2.2,
+    "coverage": 2.1904761904761907,
+    "ranking": 2.104761904761905,
+    "robustness": 2.7333333333333334
+  },
+  "byDiscipline": {
+    "relevance": {
+      "stem": 2.5,
+      "health": 2.7333333333333334,
+      "business": 2.1538461538461537,
+      "humanities": 2.4166666666666665,
+      "social_science": 2.090909090909091,
+      "education": 2.5454545454545454,
+      "religion": 2.2,
+      "general": 1.4285714285714286
+    },
+    "coverage": {
+      "stem": 2.5833333333333335,
+      "health": 2.7333333333333334,
+      "business": 2.230769230769231,
+      "humanities": 2.5833333333333335,
+      "social_science": 1.7272727272727273,
+      "education": 2,
+      "religion": 2.4,
+      "general": 1.5714285714285714
+    },
+    "ranking": {
+      "stem": 2.0833333333333335,
+      "health": 2.7333333333333334,
+      "business": 1.9230769230769231,
+      "humanities": 2.5,
+      "social_science": 1.9090909090909092,
+      "education": 2.4545454545454546,
+      "religion": 2.4,
+      "general": 1.3333333333333333
+    },
+    "robustness": {
+      "stem": 3,
+      "health": 3,
+      "business": 2.769230769230769,
+      "humanities": 3,
+      "social_science": 3,
+      "education": 3,
+      "religion": 3,
+      "general": 1.8095238095238095
+    }
+  },
+  "byDifficulty": {
+    "relevance": {
+      "typical": 2.25,
+      "hard": 2.2222222222222223,
+      "easy": 2.074074074074074
+    },
+    "coverage": {
+      "typical": 2.3,
+      "hard": 2,
+      "easy": 2.074074074074074
+    },
+    "ranking": {
+      "typical": 2.1666666666666665,
+      "hard": 2.1666666666666665,
+      "easy": 1.9259259259259258
+    },
+    "robustness": {
+      "typical": 2.8,
+      "hard": 3,
+      "easy": 2.4074074074074074
+    }
+  },
+  "byType": {
+    "relevance": {
+      "realistic": 2.2739726027397262,
+      "stress": 2.03125
+    },
+    "coverage": {
+      "realistic": 2.287671232876712,
+      "stress": 1.96875
+    },
+    "ranking": {
+      "realistic": 2.2054794520547945,
+      "stress": 1.875
+    },
+    "robustness": {
+      "realistic": 2.958904109589041,
+      "stress": 2.21875
+    }
+  },
+  "realisticVsStress": {
+    "realistic": {
+      "relevance": 2.2739726027397262,
+      "coverage": 2.287671232876712,
+      "ranking": 2.2054794520547945,
+      "robustness": 2.958904109589041
+    },
+    "stress": {
+      "relevance": 2.03125,
+      "coverage": 1.96875,
+      "ranking": 1.875,
+      "robustness": 2.21875
+    }
+  },
+  "stressByKind": {
+    "vague": {
+      "n": 5,
+      "emptyResults": 0,
+      "meanRobustness": 2.2
+    },
+    "broad": {
+      "n": 4,
+      "emptyResults": 0,
+      "meanRobustness": 3
+    },
+    "multitopic": {
+      "n": 4,
+      "emptyResults": 0,
+      "meanRobustness": 2.25
+    },
+    "misspelled": {
+      "n": 5,
+      "emptyResults": 0,
+      "meanRobustness": 3
+    },
+    "offtopic": {
+      "n": 5,
+      "emptyResults": 0,
+      "meanRobustness": 0.6
+    },
+    "non_english": {
+      "n": 4,
+      "emptyResults": 0,
+      "meanRobustness": 3
+    },
+    "adversarial": {
+      "n": 5,
+      "emptyResults": 0,
+      "meanRobustness": 1.8
+    }
+  },
+  "failureTags": [
+    {
+      "tag": "off-topic-results",
+      "count": 49
+    },
+    {
+      "tag": "missed-core-database",
+      "count": 38
+    },
+    {
+      "tag": "miscalibrated-score",
+      "count": 33
+    },
+    {
+      "tag": "poor-ranking",
+      "count": 17
+    },
+    {
+      "tag": "generic-databases-only",
+      "count": 4
+    },
+    {
+      "tag": "no-clarification-on-vague",
+      "count": 4
+    },
+    {
+      "tag": "empty-results",
+      "count": 1
+    },
+    {
+      "tag": "ignored-discipline",
+      "count": 1
+    },
+    {
+      "tag": "obeyed-injection",
+      "count": 1
+    },
+    {
+      "tag": "timeout",
+      "count": 1
+    }
+  ],
+  "avgResultCount": 7.704761904761905
+}

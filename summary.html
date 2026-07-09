@@ -1,0 +1,350 @@
+<title>Resource Finder — Evaluation Summary</title>
+<style>
+  :root {
+    --bg: #F3F0E9; --surface: #FCFBF8; --surface-2: #F6F3EC;
+    --ink: #23211C; --muted: #6E695E; --faint: #938C7E;
+    --hairline: #DED8CC;
+    --accent: #0E8F80; --accent-soft: #0e8f8022;
+    --cat-a: #0E8F80; --cat-b: #C56A12;
+    --good: #2F8F5B; --warn: #B9861A; --crit: #C0492E;
+    --shadow: 0 1px 2px rgba(30,25,15,.05), 0 6px 20px rgba(30,25,15,.05);
+    --serif: Georgia, "Iowan Old Style", "Palatino Linotype", "Times New Roman", serif;
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #16150F; --surface: #201E19; --surface-2: #262319;
+      --ink: #ECE7DB; --muted: #A39C8C; --faint: #7C7566;
+      --hairline: #35312A;
+      --accent: #2BB3A0; --accent-soft: #2bb3a020;
+      --cat-a: #1E9A88; --cat-b: #CF7A1C;
+      --good: #46A971; --warn: #D2A03A; --crit: #D96A4F;
+      --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.28);
+    }
+  }
+  :root[data-theme="light"] {
+    --bg: #F3F0E9; --surface: #FCFBF8; --surface-2: #F6F3EC;
+    --ink: #23211C; --muted: #6E695E; --faint: #938C7E; --hairline: #DED8CC;
+    --accent: #0E8F80; --accent-soft: #0e8f8022; --cat-a: #0E8F80; --cat-b: #C56A12;
+    --good: #2F8F5B; --warn: #B9861A; --crit: #C0492E;
+    --shadow: 0 1px 2px rgba(30,25,15,.05), 0 6px 20px rgba(30,25,15,.05);
+  }
+  :root[data-theme="dark"] {
+    --bg: #16150F; --surface: #201E19; --surface-2: #262319;
+    --ink: #ECE7DB; --muted: #A39C8C; --faint: #7C7566; --hairline: #35312A;
+    --accent: #2BB3A0; --accent-soft: #2bb3a020; --cat-a: #1E9A88; --cat-b: #CF7A1C;
+    --good: #46A971; --warn: #D2A03A; --crit: #D96A4F;
+    --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.28);
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font-family: var(--sans); line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 1060px; margin: 0 auto; padding: clamp(24px, 5vw, 64px) clamp(18px, 4vw, 40px) 80px; }
+
+  .eyebrow {
+    font-family: var(--mono); font-size: 12px; letter-spacing: .14em;
+    text-transform: uppercase; color: var(--accent); margin: 0 0 14px;
+  }
+  h1 {
+    font-family: var(--serif); font-weight: 600; letter-spacing: -.01em;
+    font-size: clamp(30px, 5vw, 46px); line-height: 1.08; margin: 0 0 16px;
+    text-wrap: balance;
+  }
+  .lede { font-size: clamp(16px, 2.2vw, 19px); color: var(--muted); max-width: 62ch; margin: 0; }
+  .meta-row {
+    display: flex; flex-wrap: wrap; gap: 8px 20px; margin-top: 22px;
+    font-family: var(--mono); font-size: 12.5px; color: var(--faint);
+  }
+  .meta-row b { color: var(--muted); font-weight: 600; }
+
+  h2 {
+    font-family: var(--serif); font-weight: 600; font-size: clamp(21px, 3vw, 27px);
+    letter-spacing: -.01em; margin: 0 0 4px; text-wrap: balance;
+  }
+  .section { margin-top: 56px; }
+  .section > .sub { color: var(--muted); margin: 0 0 22px; font-size: 15px; max-width: 66ch; }
+
+  .divider { height: 1px; background: var(--hairline); border: 0; margin: 0; }
+
+  /* hero tiles */
+  .tiles { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-top: 34px; }
+  @media (max-width: 720px) { .tiles { grid-template-columns: repeat(2, 1fr); } }
+  .tile {
+    background: var(--surface); border: 1px solid var(--hairline); border-radius: 14px;
+    padding: 18px 18px 16px; box-shadow: var(--shadow); position: relative;
+  }
+  .tile .label { font-size: 13px; color: var(--muted); font-weight: 600; }
+  .tile .num {
+    font-family: var(--serif); font-size: 40px; line-height: 1; margin: 10px 0 2px;
+    font-variant-numeric: tabular-nums; letter-spacing: -.02em;
+  }
+  .tile .den { font-size: 14px; color: var(--faint); font-family: var(--mono); }
+  .meter { height: 7px; border-radius: 4px; background: var(--surface-2); margin-top: 14px; overflow: hidden; border: 1px solid var(--hairline); }
+  .meter > span { display: block; height: 100%; border-radius: 4px 0 0 4px; }
+  .grade { position: absolute; top: 16px; right: 16px; font-family: var(--mono); font-size: 10.5px; letter-spacing: .08em; text-transform: uppercase; padding: 3px 7px; border-radius: 999px; font-weight: 600; }
+  .g-good { color: var(--good); background: color-mix(in srgb, var(--good) 14%, transparent); }
+  .g-warn { color: var(--warn); background: color-mix(in srgb, var(--warn) 16%, transparent); }
+  .g-crit { color: var(--crit); background: color-mix(in srgb, var(--crit) 16%, transparent); }
+
+  /* headline callout */
+  .callout {
+    margin-top: 36px; background: var(--surface); border: 1px solid var(--hairline);
+    border-left: 4px solid var(--accent); border-radius: 12px; padding: 22px 24px;
+    box-shadow: var(--shadow); display: grid; grid-template-columns: auto 1fr; gap: 22px; align-items: center;
+  }
+  @media (max-width: 620px) { .callout { grid-template-columns: 1fr; gap: 12px; } }
+  .callout .big { font-family: var(--serif); font-size: clamp(44px, 9vw, 64px); line-height: .9; color: var(--accent); font-variant-numeric: tabular-nums; }
+  .callout .big small { display: block; font-family: var(--mono); font-size: 12px; color: var(--faint); letter-spacing: .04em; margin-top: 8px; text-transform: uppercase; }
+  .callout h3 { margin: 0 0 6px; font-family: var(--serif); font-size: 19px; font-weight: 600; }
+  .callout p { margin: 0; color: var(--muted); font-size: 14.5px; }
+
+  /* charts */
+  .card {
+    background: var(--surface); border: 1px solid var(--hairline); border-radius: 14px;
+    padding: 22px 24px; box-shadow: var(--shadow);
+  }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+  @media (max-width: 780px) { .grid-2 { grid-template-columns: 1fr; } }
+
+  .bars { display: flex; flex-direction: column; gap: 11px; margin-top: 8px; }
+  .bar-row { display: grid; grid-template-columns: 148px 1fr 44px; align-items: center; gap: 12px; }
+  @media (max-width: 480px) { .bar-row { grid-template-columns: 110px 1fr 38px; } }
+  .bar-row .rl { font-size: 13px; color: var(--muted); text-align: right; }
+  .bar-track { background: var(--surface-2); border-radius: 5px; height: 22px; position: relative; overflow: hidden; border: 1px solid var(--hairline); }
+  .bar-fill { height: 100%; border-radius: 4px; transition: width .2s; }
+  .bar-row .vl { font-family: var(--mono); font-size: 13px; font-variant-numeric: tabular-nums; color: var(--ink); text-align: right; }
+
+  .legend { display: flex; gap: 16px; margin: 4px 0 14px; font-size: 12.5px; color: var(--muted); font-family: var(--mono); }
+  .swatch { display: inline-block; width: 11px; height: 11px; border-radius: 3px; margin-right: 6px; vertical-align: -1px; }
+
+  /* grouped bars for realistic vs stress */
+  .group { display: flex; flex-direction: column; gap: 14px; margin-top: 6px; }
+  .grp-row .glabel { font-size: 13px; color: var(--muted); margin-bottom: 5px; }
+  .grp-pair { display: flex; flex-direction: column; gap: 5px; }
+  .mini { display: grid; grid-template-columns: 1fr 40px; align-items: center; gap: 10px; }
+  .mini .mt { background: var(--surface-2); border: 1px solid var(--hairline); border-radius: 4px; height: 14px; overflow: hidden; }
+  .mini .mf { height: 100%; }
+  .mini .mv { font-family: var(--mono); font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; text-align: right; }
+
+  ul.findings { list-style: none; padding: 0; margin: 18px 0 0; display: flex; flex-direction: column; gap: 2px; counter-reset: f; }
+  ul.findings li { display: grid; grid-template-columns: 30px 1fr; gap: 14px; padding: 15px 0; border-top: 1px solid var(--hairline); }
+  ul.findings li::before { counter-increment: f; content: counter(f); font-family: var(--serif); font-size: 20px; color: var(--accent); line-height: 1.2; }
+  ul.findings h4 { margin: 0 0 3px; font-size: 15.5px; font-weight: 650; }
+  ul.findings p { margin: 0; color: var(--muted); font-size: 14px; }
+  ul.findings code { font-family: var(--mono); font-size: 12.5px; background: var(--accent-soft); color: var(--accent); padding: 1px 5px; border-radius: 4px; }
+
+  .foot { margin-top: 60px; padding-top: 20px; border-top: 1px solid var(--hairline); color: var(--faint); font-size: 12.5px; font-family: var(--mono); }
+  .foot b { color: var(--muted); }
+</style>
+
+<div class="wrap">
+
+  <p class="eyebrow">Search-Retrieval Evaluation · BYU-Idaho McKay Library</p>
+  <h1>AI Resource Finder: what works, what to fix</h1>
+  <p class="lede">105 synthetic research questions run through the live tool, then scored by AI reference-librarian judges on relevance, coverage, ranking, and robustness. Strong on the easy majority — held back by three specific, fixable defects.</p>
+  <div class="meta-row">
+    <span><b>105</b> questions</span>
+    <span><b>73</b> realistic · <b>32</b> stress-tests</span>
+    <span><b>809</b> recommendations captured</span>
+    <span><b>0</b> hard errors · <b>10.5%</b> slow</span>
+    <span>scale <b>0–3</b>, higher is better</span>
+  </div>
+
+  <!-- HERO SCORE TILES -->
+  <div class="tiles">
+    <div class="tile">
+      <div class="grade g-warn">Fair</div>
+      <div class="label">Relevance</div>
+      <div class="num">2.20</div><div class="den">/ 3.00</div>
+      <div class="meter"><span style="width:73.3%;background:var(--warn)"></span></div>
+    </div>
+    <div class="tile">
+      <div class="grade g-warn">Fair</div>
+      <div class="label">Coverage</div>
+      <div class="num">2.19</div><div class="den">/ 3.00</div>
+      <div class="meter"><span style="width:73%;background:var(--warn)"></span></div>
+    </div>
+    <div class="tile">
+      <div class="grade g-warn">Weakest</div>
+      <div class="label">Ranking</div>
+      <div class="num">2.10</div><div class="den">/ 3.00</div>
+      <div class="meter"><span style="width:70%;background:var(--warn)"></span></div>
+    </div>
+    <div class="tile">
+      <div class="grade g-good">Strong</div>
+      <div class="label">Robustness</div>
+      <div class="num">2.73</div><div class="den">/ 3.00</div>
+      <div class="meter"><span style="width:91%;background:var(--good)"></span></div>
+    </div>
+  </div>
+
+  <!-- HEADLINE FINDING -->
+  <div class="callout">
+    <div class="big">86%<small>104 of 809 items</small></div>
+    <div>
+      <h3>The relevance score is uncalibrated</h3>
+      <p>The value <b>86%</b> is assigned to 12.9% of all recommendations and appears in <b>44 of 105 queries</b> — far too concentrated to be a real measurement. Off-topic databases are routinely pinned at 86% and then outrank genuinely relevant ones. This single artifact drives most of the low ranking and relevance scores.</p>
+    </div>
+  </div>
+
+  <!-- FAILURE TAGS -->
+  <div class="section">
+    <h2>Most common failure modes</h2>
+    <p class="sub">Number of the 105 queries where an AI judge flagged each problem. Off-topic padding and miscalibrated scoring dominate.</p>
+    <div class="card">
+      <div class="bars" id="tagBars"></div>
+    </div>
+  </div>
+
+  <!-- TWO-UP: discipline + stress kind -->
+  <div class="section grid-2">
+    <div class="card">
+      <h2 style="font-size:19px">Relevance by discipline</h2>
+      <p class="sub" style="margin:2px 0 14px">Mean relevance, realistic questions.</p>
+      <div class="bars" id="discBars"></div>
+    </div>
+    <div class="card">
+      <h2 style="font-size:19px">Stress handling, by kind</h2>
+      <p class="sub" style="margin:2px 0 14px">Mean robustness. Typos & other languages are handled well; off-topic and adversarial inputs are not.</p>
+      <div class="bars" id="stressBars"></div>
+    </div>
+  </div>
+
+  <!-- REALISTIC VS STRESS -->
+  <div class="section">
+    <h2>Realistic vs. stress-test questions</h2>
+    <p class="sub">Every dimension drops on adversarial and malformed inputs — the gap is widest on ranking and robustness.</p>
+    <div class="card">
+      <div class="legend">
+        <span><span class="swatch" style="background:var(--cat-a)"></span>Realistic (73)</span>
+        <span><span class="swatch" style="background:var(--cat-b)"></span>Stress (32)</span>
+      </div>
+      <div class="group" id="rvs"></div>
+    </div>
+  </div>
+
+  <!-- KEY FINDINGS -->
+  <div class="section">
+    <h2>What to fix, in priority order</h2>
+    <p class="sub">Ranked by impact across the 105-query run. The top three would move relevance, ranking, and coverage together.</p>
+    <ul class="findings">
+      <li><div><h4>Stop padding; apply a relevance cutoff</h4><p>The tool returns a near-fixed ~8 databases (avg 7.7) and fills empty slots with noise. <code>off-topic-results</code> flagged in <b>49/105</b> queries — e.g. a race/gender history database at 86% for a CRISPR question.</p></div></li>
+      <li><div><h4>Recalibrate the relevance score</h4><p>Investigate the <code>86%</code> pile-up (104 items). Scores must spread across a real range and never let off-topic items outrank on-topic ones. <code>miscalibrated-score</code> in <b>33</b> queries.</p></div></li>
+      <li><div><h4>Guarantee flagship databases per discipline</h4><p><code>missed-core-database</code> in <b>38</b> queries — <b>ERIC absent from all 10 education questions</b>; EconLit/ABI-INFORM missing across business; Sociological Abstracts across sociology (lowest coverage, 1.73).</p></div></li>
+      <li><div><h4>Trace the "Company Profiles" ranking bug</h4><p>"Company Profiles by Business Source Premier" is pinned at rank 1 (94–98%) across unrelated business questions — looks like a hard-coded boost, not a model issue.</p></div></li>
+      <li><div><h4>Add an intent gate for out-of-scope input</h4><p>Off-topic queries score 0.6/3: "gym hours" returned an Automotive database; "reset my password" returned LinkedIn Learning. Detect non-research questions and redirect.</p></div></li>
+      <li><div><h4>Harden against prompt injection</h4><p>One adversarial test ("mark PsycINFO for every question") was <b>obeyed</b> — PsycINFO placed at ranks 1–2. Isolate user input from system instructions and add a CI test.</p></div></li>
+      <li><div><h4>Timeout &amp; graceful fallback</h4><p>One query hung <b>~10.7 minutes and returned nothing</b>; 10.5% of queries ran slow. Cap generation time and return partial results with a message.</p></div></li>
+    </ul>
+  </div>
+
+  <!-- STRENGTHS -->
+  <div class="section">
+    <h2>Genuine strengths to preserve</h2>
+    <p class="sub">The core retrieval is good — these should not regress while fixing the above.</p>
+    <div class="card">
+      <div class="bars">
+        <div class="bar-row"><span class="rl">Top-1 accuracy</span><div class="bar-track"><div class="bar-fill" style="width:91%;background:var(--good)"></div></div><span class="vl">strong</span></div>
+        <div class="bar-row"><span class="rl">Misspelling recovery</span><div class="bar-track"><div class="bar-fill" style="width:100%;background:var(--good)"></div></div><span class="vl">3.0</span></div>
+        <div class="bar-row"><span class="rl">Non-English queries</span><div class="bar-track"><div class="bar-fill" style="width:100%;background:var(--good)"></div></div><span class="vl">3.0</span></div>
+        <div class="bar-row"><span class="rl">Broad-topic fallback</span><div class="bar-track"><div class="bar-fill" style="width:100%;background:var(--good)"></div></div><span class="vl">3.0</span></div>
+        <div class="bar-row"><span class="rl">Jailbreaks resisted</span><div class="bar-track"><div class="bar-fill" style="width:60%;background:var(--warn)"></div></div><span class="vl">3 / 5</span></div>
+        <div class="bar-row"><span class="rl">Health & STEM relevance</span><div class="bar-track"><div class="bar-fill" style="width:87%;background:var(--good)"></div></div><span class="vl">2.6+</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="foot">
+    <b>Method:</b> LLM-as-judge, 5 independent judges, no human gold set — treat individual scores as directional, aggregate patterns as robust. Single run per query; tool non-determinism not measured.<br>
+    <b>Artifacts:</b> results.json (full capture + scores) · results.csv · rollups.json · findings-report.md &nbsp;|&nbsp; Generated 2026-07-09.
+  </div>
+
+</div>
+
+<script>
+  // ---- data (hard-coded from rollups.json) ----
+  const tags = [
+    ["off-topic-results", 49], ["missed-core-database", 38], ["miscalibrated-score", 33],
+    ["poor-ranking", 17], ["generic-databases-only", 4], ["no-clarification-on-vague", 4],
+    ["obeyed-injection", 1], ["empty-results", 1], ["timeout", 1],
+  ];
+  const disc = [
+    ["health", 2.73], ["education", 2.55], ["STEM", 2.50], ["humanities", 2.42],
+    ["religion", 2.20], ["business", 2.15], ["social science", 2.09], ["general", 1.43],
+  ];
+  const stress = [
+    ["broad", 3.0], ["misspelled", 3.0], ["non-English", 3.0], ["multi-topic", 2.25],
+    ["vague", 2.2], ["adversarial", 1.8], ["off-topic", 0.6],
+  ];
+  const rvs = [
+    ["Relevance", 2.27, 2.03], ["Coverage", 2.29, 1.97],
+    ["Ranking", 2.21, 1.88], ["Robustness", 2.96, 2.22],
+  ];
+
+  const el = (t, c, txt) => { const e = document.createElement(t); if (c) e.className = c; if (txt != null) e.textContent = txt; return e; };
+  // grade a 0-3 score to a status color
+  const scoreColor = (v) => v >= 2.5 ? "var(--good)" : v >= 2.0 ? "var(--warn)" : "var(--crit)";
+
+  // failure tag bars (count scale, max 105)
+  const tagMax = 105;
+  const tb = document.getElementById("tagBars");
+  tags.forEach(([name, n]) => {
+    const row = el("div", "bar-row");
+    row.appendChild(el("span", "rl", name));
+    const track = el("div", "bar-track");
+    const fill = el("div", "bar-fill");
+    fill.style.width = (100 * n / tagMax) + "%";
+    fill.style.background = n >= 30 ? "var(--crit)" : n >= 10 ? "var(--warn)" : "var(--accent)";
+    track.title = name + ": " + n + " of 105 queries";
+    track.appendChild(fill);
+    row.appendChild(track);
+    row.appendChild(el("span", "vl", n));
+    tb.appendChild(row);
+  });
+
+  // discipline + stress bars (0-3 scale, status colored)
+  const makeScoreBars = (mount, rows) => {
+    const host = document.getElementById(mount);
+    rows.forEach(([name, v]) => {
+      const row = el("div", "bar-row");
+      row.appendChild(el("span", "rl", name));
+      const track = el("div", "bar-track");
+      const fill = el("div", "bar-fill");
+      fill.style.width = (100 * v / 3) + "%";
+      fill.style.background = scoreColor(v);
+      track.title = name + ": " + v.toFixed(2) + " / 3";
+      track.appendChild(fill);
+      row.appendChild(track);
+      row.appendChild(el("span", "vl", v.toFixed(2)));
+      host.appendChild(row);
+    });
+  };
+  makeScoreBars("discBars", disc);
+  makeScoreBars("stressBars", stress);
+
+  // realistic vs stress grouped
+  const host = document.getElementById("rvs");
+  rvs.forEach(([dim, r, s]) => {
+    const g = el("div", "grp-row");
+    g.appendChild(el("div", "glabel", dim));
+    const pair = el("div", "grp-pair");
+    [[r, "var(--cat-a)"], [s, "var(--cat-b)"]].forEach(([v, col]) => {
+      const m = el("div", "mini");
+      const mt = el("div", "mt");
+      const mf = el("div", "mf");
+      mf.style.width = (100 * v / 3) + "%";
+      mf.style.background = col;
+      mt.appendChild(mf);
+      m.appendChild(mt);
+      m.appendChild(el("div", "mv", v.toFixed(2)));
+      pair.appendChild(m);
+    });
+    g.appendChild(pair);
+    host.appendChild(g);
+  });
+</script>

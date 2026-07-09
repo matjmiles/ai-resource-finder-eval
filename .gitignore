@@ -1,0 +1,7 @@
+node_modules/
+data/raw/
+*.log
+
+# judging intermediates (regenerable; merged into data/results.json)
+data/batch*.json
+data/scores*.json
