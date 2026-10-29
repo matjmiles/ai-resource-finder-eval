@@ -62,7 +62,8 @@ scored against their answers. **Full how-to: [docs/gold-set.md](docs/gold-set.md
 ```bash
 node src/gold-set/run.js rate --limit 10 --cap 0.05   # Jev rates searches (sends data; see below)
 node src/gold-set/run.js sheet                        # -> private/gold-set/librarian-gold-set.csv
-node src/gold-set/run.js check                        # validate librarians' database names
+node src/gold-set/run.js xlsx                         # -> .xlsx with A-Z dropdowns, for Google Sheets
+node src/gold-set/run.js check --sheet <download>.csv # validate librarians' database names
 node src/gold-set/run.js score [--log newer-log.csv]  # Resource Finder vs. gold
 ```
 
@@ -97,7 +98,8 @@ src/
   gold-set/
     questions.js         # Jev state, questions, thresholds, bucket truth table (edit wording here)
     questions.test.js
-    run.js               # CLI: rate | sheet | check | score
+    run.js               # CLI: rate | sheet | xlsx | check | score
+    xlsx.js              # librarian workbook (ideal_1..5 dropdowns from the A-Z list)
   lib/
     csv.js               # RFC 4180 CSV read/write (multi-line fields, Excel BOM)
     goldSet.js           # pure helpers: log loading, sampling, name checks, scoring

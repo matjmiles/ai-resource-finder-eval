@@ -11,18 +11,19 @@ gold answers; librarians do. Jev only rates how useful each recommended database
 query, so the sample isn't all easy cases.
 
 ```
-search log ──rate──▶ Jev ratings ──sheet──▶ librarian-gold-set.csv ──librarians──▶ ideal_databases
-                                              databases.csv (A–Z names)              │
-                                                                         check ◀─────┤
-                                                                         score ◀─────┘
+search log ─rate─▶ Jev ratings ─sheet─▶ librarian-gold-set.csv ─xlsx─▶ Google Sheet
+                                      databases.csv (A–Z names)          │ librarians pick
+                                                                         ▼ ideal_1 … ideal_5
+                                              check, score ◀── Queries tab downloaded as CSV
 ```
 
-All commands run from the repo root with Node 22+ and no extra packages.
+All commands run from the repo root with Node 22+ (run `npm install` once; `xlsx` uses exceljs).
 
 | Step | Command | Sends data? |
 | --- | --- | --- |
 | Rate searches with Jev | `node src/gold-set/run.js rate [--limit 10] [--cap 0.10] [--dry-run]` | Yes: queries and database names to TypeSafe |
 | Build the librarian sheet | `node src/gold-set/run.js sheet [--per-bucket 50] [--force]` | No |
+| Make the librarian workbook (dropdowns) | `node src/gold-set/run.js xlsx` | No |
 | Validate librarians' names | `node src/gold-set/run.js check [--sheet file.csv]` | No |
 | Score the Resource Finder | `node src/gold-set/run.js score [--sheet file.csv] [--log newer-log.csv]` | No |
 
@@ -42,6 +43,7 @@ one-word query").
 | `ratings/<hash>.json` | Exact Jev request and response for each distinct query | `rate` |
 | `librarian-gold-set.csv` | The 150 queries for librarians | `sheet` |
 | `databases.csv` | Every name librarians can use | `sheet` |
+| `librarian-gold-set.xlsx` | Workbook with A–Z dropdowns, for Google Sheets | `xlsx` |
 | `score-report.md`, `score-by-query.csv` | Results of a scoring run | `score` |
 
 ## One-time Jev setup
@@ -137,14 +139,44 @@ sheet; the new sample will be different.
 The October 2026 run gave 212 good, 26 poor, 151 mixed and 0 junk. The sheet has 50 good, 26
 poor, 24 near_poor and 50 mixed.
 
-## Step 3: librarians fill in `ideal_databases`
+## Step 3: librarians fill in the Google Sheet
 
-Open `librarian-gold-set.csv` in Excel. Each row is one query.
+```sh
+node src/gold-set/run.js xlsx      # -> private/gold-set/librarian-gold-set.xlsx
+```
+
+`xlsx` turns the sheet into an Excel workbook built for picking from a list:
+
+- **How to:** instructions for librarians.
+- **Queries:** one row per query. Five yellow columns, `ideal_1` (best) to `ideal_5`, each have
+  a dropdown of every database on the Databases tab, in alphabetical order. A typed name that
+  isn't in the list is rejected.
+- **Databases:** all 526 names, with vendor, A–Z status, subjects, types and
+  `times_recommended`.
+
+Ranked single-choice columns are used instead of one multi-select cell for two reasons. They
+keep the order explicit, and Google's multi-select dropdown separates choices with commas,
+while 58 database names contain commas themselves.
+
+**Put it in Google Sheets under your BYU-Idaho Google account,** not a personal one,
+because the queries are patron data:
+
+1. Go to <https://drive.google.com> signed in with your BYU-Idaho account. Choose **New → File
+   upload** and pick `private/gold-set/librarian-gold-set.xlsx`.
+2. Open the uploaded file, then choose **File → Save as Google Sheets**. Use the converted
+   copy from here on, and delete the uploaded .xlsx from Drive.
+3. Check one yellow cell: it should show a dropdown arrow and the A–Z list. If it doesn't,
+   select the yellow columns on the Queries tab, choose **Data → Data validation → Add rule →
+   Dropdown (from a range)**, enter `Databases!A2:A527`, and set *If the data is invalid* to
+   *Reject the input*.
+4. *(Optional)* Protect every column except the yellow ones (**Data → Protect sheets and
+   ranges**) so the reference columns can't be edited by accident.
+5. Share it only with the librarians doing the review, as Editor. Keep link sharing restricted.
 
 | Column | Edit? | Meaning |
 | --- | --- | --- |
 | `query` | no | What the patron typed |
-| **`ideal_databases`** | **yes** | The databases this query *should* return, **best first**, separated by `;`. Copy names exactly from `databases.csv`. |
+| **`ideal_1` … `ideal_5`** | **yes** | The databases this query *should* return, best first. Use as many as needed. |
 | `jev_bucket` | no | good / poor / near_poor / mixed: why this query was picked |
 | `jev_top3_helpful` | no | Jev's mean P(helpful) over the top 3 results |
 | `jev_helpful_by_rank` | no | Jev's P(helpful) for each returned database |
@@ -154,26 +186,34 @@ Open `librarian-gold-set.csv` in Excel. Each row is one query.
 | `match_reasons` | no | Its "why this matches" note and how it found each result |
 | `times_searched`, `last_searched_utc` | no | How often the query appears in the log, and when it was last run |
 
-Write what you would recommend whether or not the Resource Finder returned it. Leave the row
-empty to skip a query. `databases.csv` has `subjects`, `types` and `times_recommended` columns
-to help you find candidates. Databases with `times_recommended` = 0 have never been suggested.
+Librarians choose what they would recommend, whether or not the Resource Finder returned it.
+To skip a query, leave all five blank. Databases with `times_recommended` = 0 have never been
+suggested.
+
+**When they're done,** open the **Queries** tab and choose **File → Download → Comma-separated
+values (.csv)**. Save the file in `private/gold-set/`, for example as `gold-answers.csv`, and
+pass it to `check` and `score` with `--sheet`.
+
+(The older single `ideal_databases` column, with names separated by `;`, still works with
+`check` and `score`.)
 
 ## Step 4: check the names (`check`)
 
 ```sh
-node src/gold-set/run.js check
+node src/gold-set/run.js check --sheet private/gold-set/gold-answers.csv
 ```
 
 `check` lists every name that isn't exactly in `databases.csv` and suggests the closest one,
-for example *"cinahl" … did you mean "CINAHL"?*. It also flags a name repeated in a row, and
-notes names that are hidden in the A–Z or no longer in it. It exits with an error until every
-name matches. `--sheet` checks a separate copy, for example one librarian's file.
+for example *"cinahl" … did you mean "CINAHL"?*. The dropdowns prevent most of these, but
+pasted or edited cells can slip through. It also flags a name repeated in a row and a skipped
+rank (`ideal_2` filled with `ideal_1` empty). It notes names that are hidden in the A–Z or no
+longer in it. It exits with an error until every name matches.
 
 ## Step 5: score (`score`)
 
 ```sh
-node src/gold-set/run.js score                         # against the results in the sheet
-node src/gold-set/run.js score --log private/gold-set/search-log-result-<newer>.csv
+node src/gold-set/run.js score --sheet private/gold-set/gold-answers.csv          # against the results in the sheet
+node src/gold-set/run.js score --sheet private/gold-set/gold-answers.csv --log private/gold-set/search-log-result-<newer>.csv
 ```
 
 `score` won't run until `check` passes. For each query with gold answers, it computes:

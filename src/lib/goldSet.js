@@ -73,6 +73,28 @@ const sample = (items, n, rand) => shuffle(items, rand).slice(0, n);
 
 const splitNames = (cell) => (cell || '').split(';').map((s) => s.trim()).filter(Boolean);
 
+const RANK_COLUMN = /^ideal_(\d+)$/;
+
+// A row's gold databases, best first: the ranked ideal_1, ideal_2, ... columns
+// (one dropdown each), or the older single ideal_databases cell ("A; B").
+function goldNames(row) {
+  const ranked = Object.keys(row)
+    .map((k) => [k, k.match(RANK_COLUMN)])
+    .filter(([, m]) => m)
+    .sort((a, b) => Number(a[1][1]) - Number(b[1][1]));
+  if (!ranked.length) return splitNames(row.ideal_databases);
+  return ranked.map(([k]) => (row[k] || '').trim()).filter(Boolean);
+}
+
+// Ranks left empty before a filled one (ideal_1 empty, ideal_2 filled).
+function rankGaps(row) {
+  const ranks = Object.keys(row).map((k) => k.match(RANK_COLUMN)).filter(Boolean)
+    .map((m) => Number(m[1])).sort((a, b) => a - b);
+  const filled = ranks.filter((n) => (row[`ideal_${n}`] || '').trim());
+  if (!filled.length) return [];
+  return ranks.filter((n) => n < Math.max(...filled) && !filled.includes(n));
+}
+
 function levenshtein(a, b) {
   const d = Array.from({ length: b.length + 1 }, (_, j) => j);
   for (let i = 1; i <= a.length; i++) {
@@ -106,16 +128,17 @@ function suggestName(name, official) {
 // sheetRows: librarian CSV rows; databases: databases.csv rows.
 // Returns { filled, empty, problems: [{ row, query, kind, name, suggestion? }] }
 // Kinds: unknown (not in databases.csv), duplicate (named twice in one row),
-// hidden / not_in_az (allowed, but worth a second look).
+// hidden / not_in_az / gap (allowed, but worth a second look).
 function checkGold(sheetRows, databases) {
   const byName = new Map(databases.map((d) => [d.database, d]));
   const official = [...byName.keys()];
   const problems = [];
   let filled = 0;
   sheetRows.forEach((r, i) => {
-    const names = splitNames(r.ideal_databases);
+    const names = goldNames(r);
     if (!names.length) return;
     filled++;
+    for (const n of rankGaps(r)) problems.push({ row: i + 2, query: r.query, kind: 'gap', name: `ideal_${n}` });
     const seen = new Set();
     for (const name of names) {
       const at = { row: i + 2, query: r.query, name }; // +2: header row, 1-based
@@ -195,6 +218,6 @@ function jevAgreement(pairs, yes, no) {
 }
 
 module.exports = {
-  norm, cacheKey, loadSearches, rng, shuffle, sample, splitNames, suggestName, checkGold,
+  norm, cacheKey, loadSearches, rng, shuffle, sample, splitNames, goldNames, rankGaps, suggestName, checkGold,
   parseResultsCell, parseJevCell, scoreQuery, summarize, jevAgreement, mean,
 };

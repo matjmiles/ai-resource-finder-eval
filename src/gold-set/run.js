@@ -2,6 +2,7 @@
 //
 //   node src/gold-set/run.js rate  [--limit 10] [--cap 0.10] [--dry-run]
 //   node src/gold-set/run.js sheet [--per-bucket 50] [--force]
+//   node src/gold-set/run.js xlsx
 //   node src/gold-set/run.js check [--sheet <librarian csv>]
 //   node src/gold-set/run.js score [--sheet <librarian csv>] [--log private/gold-set/<newer search log>.csv]
 //
@@ -12,7 +13,10 @@
 //         as "unhelpful".
 // sheet - buckets rated searches good / poor / mixed, samples each bucket into
 //         the librarian CSV, and writes databases.csv from the A-Z list.
-// check - validates librarians' ideal_databases names against databases.csv.
+// xlsx  - turns the librarian CSV into an Excel workbook with an A-Z dropdown
+//         in each ideal_N column, for import into Google Sheets.
+// check - validates librarians' ideal_1..ideal_5 names against databases.csv.
+//         --sheet takes the Queries tab downloaded from Google Sheets as CSV.
 // score - compares Resource Finder results with the librarians' gold answers.
 //
 // See docs/gold-set.md. All data lives in git-ignored private/gold-set/.
@@ -21,6 +25,7 @@ const path = require('path');
 const q = require('./questions');
 const g = require('../lib/goldSet');
 const { readCsvObjects, writeCsvObjects } = require('../lib/csv');
+const { writeWorkbook } = require('./xlsx');
 
 const DATA = path.join(__dirname, '../../private/gold-set');
 const LOG_PATTERN = /^search-log-result-.*\.csv$/;
@@ -35,7 +40,8 @@ const USD_PER_INPUT_TOKEN = 0.042 / 1_000_000;
 const WORKERS = 8;
 const SEED = 20261029; // fixed so the sample can be reproduced
 const BUCKETS = ['good', 'poor', 'mixed'];
-const EDIT_COLUMNS = ['ideal_databases'];
+const GOLD_RANKS = 5; // ideal_1 (best) .. ideal_5, one A-Z dropdown each
+const EDIT_COLUMNS = Array.from({ length: GOLD_RANKS }, (_, i) => `ideal_${i + 1}`);
 
 const readCsv = (file) => readCsvObjects(fs.readFileSync(file, 'utf8'));
 
@@ -224,6 +230,22 @@ function cmdSheet(opts) {
   console.log(`Wrote ${SHEET} (${picked.length} queries)`);
 }
 
+// --- xlsx -----------------------------------------------------------------------
+
+async function cmdXlsx(opts) {
+  // Older sheets have one "A; B" ideal_databases cell; spread it over the ranked columns.
+  const rows = readCsv(opts.sheet || SHEET).map((r) => {
+    const gold = g.goldNames(r);
+    if (gold.length > GOLD_RANKS) throw new Error(`"${r.query}" has ${gold.length} gold databases; the workbook holds ${GOLD_RANKS}.`);
+    const ranked = Object.fromEntries(EDIT_COLUMNS.map((c, i) => [c, gold[i] || '']));
+    const { ideal_databases, ...rest } = r;
+    return { query: r.query, ...ranked, ...rest, ...ranked }; // ranked columns right after the query
+  });
+  const out = path.join(DATA, 'librarian-gold-set.xlsx');
+  await writeWorkbook(out, rows, readCsv(DATABASES), EDIT_COLUMNS);
+  console.log(`Wrote ${out} (${rows.length} queries, ${EDIT_COLUMNS.length} dropdown columns)`);
+}
+
 // --- check ----------------------------------------------------------------------
 
 const KIND_TEXT = {
@@ -231,6 +253,7 @@ const KIND_TEXT = {
   duplicate: 'named twice in this row',
   hidden: 'hidden in the A-Z (allowed; check it is intended)',
   not_in_az: 'no longer in the A-Z (allowed; check it is intended)',
+  gap: 'left empty although a later rank is filled (allowed; check the order)',
 };
 
 function runCheck(opts) {
@@ -240,7 +263,7 @@ function runCheck(opts) {
 
 function cmdCheck(opts) {
   const { sheet, filled, empty, problems } = runCheck(opts);
-  console.log(`${filled} of ${sheet.length} queries have ideal_databases filled in; ${empty} still empty.`);
+  console.log(`${filled} of ${sheet.length} queries have gold databases filled in; ${empty} still empty.`);
   for (const p of problems) {
     const hint = p.suggestion ? ` - did you mean "${p.suggestion}"?` : '';
     console.log(`  row ${p.row}: "${p.name}" ${KIND_TEXT[p.kind]}${hint}`);
@@ -257,7 +280,7 @@ const pct = (x) => (x == null ? '-' : `${Math.round(100 * x)}%`);
 function cmdScore(opts) {
   const { sheet, problems } = runCheck(opts);
   if (problems.some((p) => p.kind === 'unknown' || p.kind === 'duplicate')) {
-    throw new Error('Some ideal_databases names need fixing first; run: node src/gold-set/run.js check');
+    throw new Error('Some gold database names need fixing first; run: node src/gold-set/run.js check');
   }
   // Results to score: the run in the sheet, or a newer search log.
   const rerun = opts.log ? new Map(g.loadSearches(readCsv(opts.log)).map((s) => [g.norm(s.query), s])) : null;
@@ -265,7 +288,7 @@ function cmdScore(opts) {
   const jevPairs = [];
   let notRerun = 0;
   for (const r of sheet) {
-    const gold = g.splitNames(r.ideal_databases);
+    const gold = g.goldNames(r);
     if (!gold.length) continue;
     let results;
     if (rerun) {
@@ -282,7 +305,7 @@ function cmdScore(opts) {
     }
     scored.push({ query: r.query, bucket: r.jev_bucket, gold, results, ...g.scoreQuery(results, gold) });
   }
-  if (!scored.length) throw new Error('No queries have ideal_databases filled in yet.');
+  if (!scored.length) throw new Error('No queries have gold databases filled in yet.');
 
   const row = (label, s) => `| ${label} | ${s.n} | ${pct(s.top1_in_gold)} | ${pct(s.precision_at_3)} | ` +
     `${pct(s.gold_recall)} | ${pct(s.first_choice_in_top3)} | ${pct(s.first_choice_returned)} |`;
@@ -330,9 +353,9 @@ function cmdScore(opts) {
 
 async function main() {
   const { cmd, opts } = args();
-  const commands = { rate: cmdRate, sheet: cmdSheet, check: cmdCheck, score: cmdScore };
+  const commands = { rate: cmdRate, sheet: cmdSheet, check: cmdCheck, score: cmdScore, xlsx: cmdXlsx };
   if (!commands[cmd]) {
-    console.log('Usage: node src/gold-set/run.js rate|sheet|check|score [options] (see docs/gold-set.md)');
+    console.log('Usage: node src/gold-set/run.js rate|sheet|xlsx|check|score [options] (see docs/gold-set.md)');
     process.exitCode = 2;
     return;
   }

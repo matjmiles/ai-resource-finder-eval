@@ -60,6 +60,21 @@ test('checkGold flags unknown names with a suggestion, duplicates, and hidden da
   assert.strictEqual(r.problems[0].row, 2);
 });
 
+test('goldNames reads ranked columns in rank order, skipping blanks', () => {
+  const row = { query: 'q', ideal_10: 'J', ideal_2: 'B', ideal_1: 'A ', ideal_3: '' };
+  assert.deepStrictEqual(g.goldNames(row), ['A', 'B', 'J']);
+});
+
+test('goldNames falls back to the older ideal_databases cell', () => {
+  assert.deepStrictEqual(g.goldNames({ ideal_databases: 'A; B' }), ['A', 'B']);
+});
+
+test('checkGold reads ranked columns and flags a skipped rank', () => {
+  const r = g.checkGold([{ query: 'q', ideal_1: '', ideal_2: 'CINAHL', ideal_3: '' }], [{ database: 'CINAHL', az_status: 'shown' }]);
+  assert.strictEqual(r.filled, 1);
+  assert.deepStrictEqual(r.problems.map((p) => [p.kind, p.name]), [['gap', 'ideal_1']]);
+});
+
 test('suggestName returns null when nothing is close', () => {
   assert.strictEqual(g.suggestName('Zebra Finch Archive', ['CINAHL', 'PubMed']), null);
 });
