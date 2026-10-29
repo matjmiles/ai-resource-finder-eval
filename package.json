@@ -9,6 +9,7 @@
   "scripts": {
     "scrape": "node src/scrape.js",
     "aggregate": "node src/aggregate.js",
+    "gold": "node src/gold-set/run.js",
     "test": "node --test"
   },
   "keywords": [],

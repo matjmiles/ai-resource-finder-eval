@@ -5,3 +5,6 @@ data/raw/
 # judging intermediates (regenerable; merged into data/results.json)
 data/batch*.json
 data/scores*.json
+
+# real user queries from the production Resource Finder (never commit)
+private/
